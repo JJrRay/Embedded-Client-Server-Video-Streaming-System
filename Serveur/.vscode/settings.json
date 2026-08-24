@@ -1,0 +1,5 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "xaver.clang-format",
+  "cmake.cmakePath": "/opt/poky/4.0.28/sysroots/x86_64-pokysdk-linux/usr/bin/cmake"
+} 

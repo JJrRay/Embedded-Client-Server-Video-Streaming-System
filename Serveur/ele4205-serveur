@@ -1,0 +1,77 @@
+#!/bin/sh
+
+NAME=ele4205-serveur
+DAEMON=/home/root/prog
+RUNDIR=/home/root
+PIDFILE=/var/run/${NAME}.pid
+LOGFILE=/var/log/${NAME}.log
+
+# Le noyau enumere l'USB en parallele du boot : /dev/video0 peut ne pas
+# exister encore quand le script s'execute. Sans cette attente, VideoCapture
+# echouerait et le serveur sortirait immediatement avec le code 1.
+wait_for_camera() {
+  i=0
+  while [ ! -e /dev/video0 ] && [ ${i} -lt 15 ]; do
+    sleep 1
+    i=$((i + 1))
+  done
+}
+
+running() {
+  [ -f ${PIDFILE} ] && kill -0 "$(cat ${PIDFILE})" 2>/dev/null
+}
+
+case "$1" in
+  start)
+    if running; then
+      echo "${NAME} already running"
+      exit 0
+    fi
+    echo "Starting ${NAME}"
+    wait_for_camera
+    cd ${RUNDIR} || exit 1
+    ${DAEMON} >> ${LOGFILE} 2>&1 &
+    echo $! > ${PIDFILE}
+    ;;
+
+  stop)
+    if ! running; then
+      rm -f ${PIDFILE}
+      exit 0
+    fi
+    echo "Stopping ${NAME}"
+    PID=$(cat ${PIDFILE})
+    kill "${PID}" 2>/dev/null
+    # Laisse le temps de fermer le socket et de relacher la camera avant
+    # d'insister. Un SIGKILL immediat laisserait le pilote UVC en plan.
+    i=0
+    while kill -0 "${PID}" 2>/dev/null && [ ${i} -lt 5 ]; do
+      sleep 1
+      i=$((i + 1))
+    done
+    kill -9 "${PID}" 2>/dev/null
+    rm -f ${PIDFILE}
+    ;;
+
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+
+  status)
+    if running; then
+      echo "${NAME} running (pid $(cat ${PIDFILE}))"
+    else
+      echo "${NAME} not running"
+      exit 1
+    fi
+    ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
