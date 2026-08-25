@@ -47,7 +47,7 @@ events and errors.
 |---:|---------|--------------------------|
 | 1 | `GET_FRAME` | — |
 | 2 | `STOP` | — |
-| 101 | `FRAME_HDR` | `frameId` + `jpegSize` + JPEG bytes |
+| 101 | `FRAME_HDR` | `frameId` + `jpegSize` + `JPEG bytes` |
 | 102 | `STOP_ACK` | — |
 | 200 | `BUTTON_PRESS` | same as `FRAME_HDR`; also triggers a disk save |
 | 201 | `NO_LIGHT` | `frameId` only — no image sent |
